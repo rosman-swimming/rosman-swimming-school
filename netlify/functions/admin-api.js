@@ -4,7 +4,7 @@ const REPO='rosman-swimming/rosman-swimming-school';
 exports.config={path:'/.netlify/functions/admin-api',rateLimit:{windowLimit:20,windowSize:60,aggregateBy:['ip','domain']}};
 function json(status,data,headers={}){return {statusCode:status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff',...headers},body:JSON.stringify(data)}}
 function env(key){return process.env[key]||''}
-function sameOrigin(event){const origin=event.headers.origin;const host=event.headers.host||event.headers['x-forwarded-host'];return !!origin&&!!host&&new URL(origin).host===host&&new URL(origin).protocol==='https:'}
+function sameOrigin(event){const origin=event.headers.origin;const host=event.headers.host||event.headers['x-forwarded-host'];try{return !!origin&&!!host&&new URL(origin).host===host&&new URL(origin).protocol==='https:'}catch{return false}}
 function makeSession(){const payload=Buffer.from(JSON.stringify({exp:Date.now()+8*3600*1000,nonce:crypto.randomBytes(16).toString('hex')})).toString('base64url');const sig=crypto.createHmac('sha256',env('SESSION_SECRET')).update(payload).digest('base64url');return payload+'.'+sig}
 function authorized(event){const cookie=(event.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('rosman_session='));if(!cookie||!env('SESSION_SECRET'))return false;const token=cookie.slice(15),parts=token.split('.');if(parts.length!==2)return false;const s=crypto.createHmac('sha256',env('SESSION_SECRET')).update(parts[0]).digest('base64url');const a=Buffer.from(s),b=Buffer.from(parts[1]);if(a.length!==b.length||!crypto.timingSafeEqual(a,b))return false;try{return JSON.parse(Buffer.from(parts[0],'base64url')).exp>Date.now()}catch{return false}}
 function validatePassword(p){const v=env('ADMIN_PASSWORD_HASH');const [salt,digest]=v.split(':');if(!salt||!digest)return false;try{const found=crypto.pbkdf2Sync(p,Buffer.from(salt,'hex'),600000,32,'sha256'),expected=Buffer.from(digest,'hex');return expected.length===found.length&&crypto.timingSafeEqual(found,expected)}catch{return false}}
@@ -12,6 +12,7 @@ function config(){return env('SESSION_SECRET').length>=32&&!!env('ADMIN_PASSWORD
 async function github(path,method='GET',data){const url='https://api.github.com/repos/'+REPO+'/contents/'+path;const r=await fetch(url,{method,headers:{authorization:'Bearer '+env('GITHUB_WRITE_TOKEN'),accept:'application/vnd.github+json','x-github-api-version':'2022-11-28','content-type':'application/json','user-agent':'rosman-site-admin'},body:data?JSON.stringify(data):undefined});if(!r.ok)throw new Error('GitHub error '+r.status);return r.json()}
 exports.handler=async event=>{try{
 if(!config())return json(503,{error:'ניהול האתר עדיין לא הוגדר'});
+if((event.body||'').length>25000)return json(413,{error:'הבקשה ארוכה מדי'});
 if(event.httpMethod==='POST'&&!sameOrigin(event))return json(403,{error:'בקשה לא מורשית'});
 const action=(event.queryStringParameters||{}).action;
 if(action==='login'&&event.httpMethod==='POST'){
@@ -41,6 +42,7 @@ for(const k of allowed)if(Object.hasOwn(body.data||{},k)){
  if(k==='contactEmail'&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v))return json(400,{error:'כתובת מייל לא תקינה'});
  d[k]=v;
 }
+if(JSON.stringify(d)===JSON.stringify(JSON.parse(Buffer.from(f.content,'base64').toString('utf8'))))return json(200,{ok:true,sha:f.sha,unchanged:true});
 const updated=await github('content/site.json','PUT',{message:'Update business information via admin',content:Buffer.from(JSON.stringify(d,null,2)+'\n').toString('base64'),sha:f.sha,branch:'main'});return json(200,{ok:true,sha:updated.content.sha});
 }
 return json(404,{error:'פעולה לא קיימת'});
