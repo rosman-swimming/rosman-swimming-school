@@ -2,8 +2,12 @@ name: Validate website
 on:
   push:
     branches: [cms-setup, custom-admin, main]
+    paths-ignore:
+      - 'content/site.json'
   pull_request:
     branches: [main]
+    paths-ignore:
+      - 'content/site.json'
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -28,6 +32,5 @@ jobs:
           test -s dist/og.jpg
           test -s dist/admin/index.html
           ! test -e dist/admin/config.yml
-          grep -q '170' dist/index.html
-          grep -q '250' dist/index.html
+          node -e "const d=require('./content/site.json');const h=require('fs').readFileSync('dist/index.html','utf8');for(const p of [d.privatePrice,d.pairPrice])if(!h.includes(String(p)+' ₪'))process.exit(1)"
           grep -q 'Rosman Swimming School' dist/index.html
