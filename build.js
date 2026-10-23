@@ -14,3 +14,5 @@ fs.mkdirSync('dist',{recursive:true});fs.writeFileSync('dist/index.html',html);f
 // Only the dedicated admin is published; legacy CMS files remain out of dist.
 fs.copyFileSync('admin/custom.html','dist/admin/index.html');
 fs.copyFileSync('admin/favicon.svg','dist/admin/favicon.svg');
+fs.writeFileSync('dist/admin/preview.png',Buffer.from(fs.readFileSync('admin/preview-image.base64','utf8').trim(),'base64'));
+
