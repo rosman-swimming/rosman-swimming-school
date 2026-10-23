@@ -1,7 +1,7 @@
 name: Validate website
 on:
   push:
-    branches: [cms-setup, main]
+    branches: [cms-setup, custom-admin, main]
   pull_request:
     branches: [main]
 jobs:
@@ -19,6 +19,8 @@ jobs:
           test -s content/site.json
       - name: Build site
         run: node build.js
+      - name: Run admin security unit tests
+        run: node --test tests/admin.test.js
       - name: Verify generated files
         run: |
           test -s dist/index.html
