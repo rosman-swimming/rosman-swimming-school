@@ -13,3 +13,4 @@ const html='<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"
 fs.mkdirSync('dist',{recursive:true});fs.writeFileSync('dist/index.html',html);fs.mkdirSync('dist/admin',{recursive:true});for(const f of ['flyer.jpg','og.jpg'])if(fs.existsSync(f))fs.copyFileSync(f,'dist/'+f);if(fs.existsSync('uploads'))fs.cpSync('uploads','dist/uploads',{recursive:true});
 // Only the dedicated admin is published; legacy CMS files remain out of dist.
 fs.copyFileSync('admin/custom.html','dist/admin/index.html');
+fs.copyFileSync('admin/favicon.svg','dist/admin/favicon.svg');
