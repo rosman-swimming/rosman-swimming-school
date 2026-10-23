@@ -32,7 +32,7 @@ const f=await github('content/site.json?ref=main');return json(200,{data:JSON.pa
 if(action==='save'&&event.httpMethod==='POST'){
 if((event.body||'').length>25000)return json(413,{error:'הטקסט ארוך מדי'});
 const body=JSON.parse(event.body||'{}');if(typeof body.sha!=='string')return json(400,{error:'נדרשת גרסה'});
-const allowed=['privatePrice','pairPrice','contactEmail','whatsappPhone','whatsappMessage','lessonIntroduction','lessonType','pairDescription','insuranceIntro','insuranceDetails','insuranceDocuments','location','weekdayHours','fridayHours','poolNotes'];
+const allowed=['privatePrice','pairPrice','contactEmail','whatsappPhone','whatsappMessage','lessonBody','insuranceBody','location','weekdayHours','fridayHours','poolNotes'];
 const f=await github('content/site.json?ref=main');if(body.sha!==f.sha)return json(409,{error:'התוכן השתנה בינתיים. רעננו את העמוד'});
 const d=JSON.parse(Buffer.from(f.content,'base64').toString('utf8'));
 for(const k of allowed)if(Object.hasOwn(body.data||{},k)){
