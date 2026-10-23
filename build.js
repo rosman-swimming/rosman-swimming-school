@@ -15,4 +15,4 @@ fs.mkdirSync('dist',{recursive:true});fs.writeFileSync('dist/index.html',html);f
 fs.copyFileSync('admin/custom.html','dist/admin/index.html');
 fs.copyFileSync('admin/favicon.svg','dist/admin/favicon.svg');
 // Publish the official Lucide square-pen PNG for WhatsApp sharing.
-fs.writeFileSync('dist/admin/lucide-square-pen.png',Buffer.from(fs.readFileSync('admin/lucide-square-pen.b64','utf8').trim(),'base64'));
+fs.writeFileSync('dist/admin/lucide-square-pen-compact.png',Buffer.from(fs.readFileSync('admin/lucide-square-pen-compact.b64','utf8').trim(),'base64'));
