@@ -1,5 +1,7 @@
 const crypto=require('node:crypto');
 const REPO='rosman-swimming/rosman-swimming-school';
+// Production edits main; the isolated test site edits its own deployed branch.
+const CONTENT_BRANCH=process.env.BRANCH==='custom-admin'?'custom-admin':'main';
 const USERNAME='gilrosman';
 function sessionKey(){return crypto.createHash('sha256').update('rosman-session-v1:').update(env('ADMIN_PASSWORD')).digest()}
 // Netlify-managed edge throttling: applies across function instances, unlike an in-memory counter.
@@ -29,13 +31,13 @@ if(action==='logout'&&event.httpMethod==='POST')return json(200,{ok:true},{'set-
 if(action==='session'&&event.httpMethod==='GET')return json(200,{authenticated:authorized(event)});
 if(!authorized(event))return json(401,{error:'יש להתחבר'});
 if(action==='read'&&event.httpMethod==='GET'){
-const f=await github('content/site.json?ref=main');return json(200,{data:JSON.parse(Buffer.from(f.content,'base64').toString('utf8')),sha:f.sha});
+const f=await github('content/site.json?ref='+CONTENT_BRANCH);return json(200,{data:JSON.parse(Buffer.from(f.content,'base64').toString('utf8')),sha:f.sha});
 }
 if(action==='save'&&event.httpMethod==='POST'){
 if((event.body||'').length>25000)return json(413,{error:'הטקסט ארוך מדי'});
 const body=JSON.parse(event.body||'{}');if(typeof body.sha!=='string')return json(400,{error:'נדרשת גרסה'});
 const allowed=['privatePrice','pairPrice','contactEmail','whatsappPhone','whatsappMessage','lessonBody','insuranceBody','location','weekdayHours','fridayHours','poolNotes'];
-const f=await github('content/site.json?ref=main');if(body.sha!==f.sha)return json(409,{error:'התוכן השתנה בינתיים. רעננו את העמוד'});
+const f=await github('content/site.json?ref='+CONTENT_BRANCH);if(body.sha!==f.sha)return json(409,{error:'התוכן השתנה בינתיים. רעננו את העמוד'});
 const d=JSON.parse(Buffer.from(f.content,'base64').toString('utf8'));
 for(const k of allowed)if(Object.hasOwn(body.data||{},k)){
  const v=body.data[k];if(k==='privatePrice'||k==='pairPrice'){if(!Number.isInteger(v)||v<0||v>99999)return json(400,{error:'מחיר לא תקין'})}
@@ -45,7 +47,7 @@ for(const k of allowed)if(Object.hasOwn(body.data||{},k)){
  d[k]=v;
 }
 if(JSON.stringify(d)===JSON.stringify(JSON.parse(Buffer.from(f.content,'base64').toString('utf8'))))return json(200,{ok:true,sha:f.sha,unchanged:true});
-const updated=await github('content/site.json','PUT',{message:'Update business information via admin',content:Buffer.from(JSON.stringify(d,null,2)+'\n').toString('base64'),sha:f.sha,branch:'main'});return json(200,{ok:true,sha:updated.content.sha});
+const updated=await github('content/site.json','PUT',{message:'Update business information via admin',content:Buffer.from(JSON.stringify(d,null,2)+'\n').toString('base64'),sha:f.sha,branch:CONTENT_BRANCH});return json(200,{ok:true,sha:updated.content.sha});
 }
 return json(404,{error:'פעולה לא קיימת'});
 }catch(e){console.error('admin request failed',e.message);return json(500,{error:'הפעולה נכשלה. נסו שוב'})}
