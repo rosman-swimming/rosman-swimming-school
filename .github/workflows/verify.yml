@@ -1,0 +1,30 @@
+name: Validate website
+on:
+  push:
+    branches: [cms-setup, main]
+  pull_request:
+    branches: [main]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check source assets
+        run: |
+          test -s flyer.jpg
+          test -s og.jpg
+          test -s content/site.json
+      - name: Build site
+        run: node build.js
+      - name: Verify generated files
+        run: |
+          test -s dist/index.html
+          test -s dist/flyer.jpg
+          test -s dist/og.jpg
+          test -s dist/admin/config.yml
+          grep -q '170' dist/index.html
+          grep -q '250' dist/index.html
+          grep -q 'Rosman Swimming School' dist/index.html
