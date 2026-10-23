@@ -1,5 +1,7 @@
 const crypto=require('node:crypto');
 const REPO='rosman-swimming/rosman-swimming-school';
+// Netlify-managed edge throttling: applies across function instances, unlike an in-memory counter.
+exports.config={path:'/.netlify/functions/admin-api',rateLimit:{windowLimit:20,windowSize:60,aggregateBy:['ip','domain']}};
 function json(status,data,headers={}){return {statusCode:status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff',...headers},body:JSON.stringify(data)}}
 function env(key){return process.env[key]||''}
 function sameOrigin(event){const origin=event.headers.origin;const host=event.headers.host||event.headers['x-forwarded-host'];return !!origin&&!!host&&new URL(origin).host===host&&new URL(origin).protocol==='https:'}
@@ -14,7 +16,8 @@ if(event.httpMethod==='POST'&&!sameOrigin(event))return json(403,{error:'בקש�
 const action=(event.queryStringParameters||{}).action;
 if(action==='login'&&event.httpMethod==='POST'){
 const b=JSON.parse(event.body||'{}');
-const username=String(b.username||''),pass=String(b.password||'');
+const username=typeof b.username==='string'?b.username:'',pass=typeof b.password==='string'?b.password:'';
+if(username.length>100||pass.length>1024)return json(400,{error:'פרטי התחברות ארוכים מדי'});
 const a=Buffer.from(username),c=Buffer.from(env('ADMIN_USERNAME'));const ok=a.length===c.length&&crypto.timingSafeEqual(a,c)&&validatePassword(pass);
 if(!ok)return json(401,{error:'שם משתמש או סיסמה שגויים'});
 return json(200,{ok:true},{'set-cookie':'rosman_session='+makeSession()+'; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=28800'});
@@ -34,6 +37,8 @@ const d=JSON.parse(Buffer.from(f.content,'base64').toString('utf8'));
 for(const k of allowed)if(Object.hasOwn(body.data||{},k)){
  const v=body.data[k];if(k==='privatePrice'||k==='pairPrice'){if(!Number.isInteger(v)||v<0||v>99999)return json(400,{error:'מחיר לא תקין'})}
  else if(typeof v!=='string'||v.length>4500)return json(400,{error:'שדה לא תקין: '+k});
+ if(k==='whatsappPhone'&&!/^9725\d{8}$/.test(v))return json(400,{error:'מספר וואטסאפ לא תקין'});
+ if(k==='contactEmail'&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v))return json(400,{error:'כתובת מייל לא תקינה'});
  d[k]=v;
 }
 const updated=await github('content/site.json','PUT',{message:'Update business information via admin',content:Buffer.from(JSON.stringify(d,null,2)+'\n').toString('base64'),sha:f.sha,branch:'main'});return json(200,{ok:true,sha:updated.content.sha});
