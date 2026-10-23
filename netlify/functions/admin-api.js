@@ -1,14 +1,16 @@
 const crypto=require('node:crypto');
 const REPO='rosman-swimming/rosman-swimming-school';
+const USERNAME='gilrosman';
+function sessionKey(){return crypto.createHash('sha256').update('rosman-session-v1:').update(env('ADMIN_PASSWORD')).digest()}
 // Netlify-managed edge throttling: applies across function instances, unlike an in-memory counter.
 exports.config={path:'/.netlify/functions/admin-api',rateLimit:{windowLimit:20,windowSize:60,aggregateBy:['ip','domain']}};
 function json(status,data,headers={}){return {statusCode:status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff',...headers},body:JSON.stringify(data)}}
 function env(key){return process.env[key]||''}
 function sameOrigin(event){const origin=event.headers.origin;const host=event.headers.host||event.headers['x-forwarded-host'];try{return !!origin&&!!host&&new URL(origin).host===host&&new URL(origin).protocol==='https:'}catch{return false}}
-function makeSession(){const payload=Buffer.from(JSON.stringify({exp:Date.now()+8*3600*1000,nonce:crypto.randomBytes(16).toString('hex')})).toString('base64url');const sig=crypto.createHmac('sha256',env('SESSION_SECRET')).update(payload).digest('base64url');return payload+'.'+sig}
-function authorized(event){const cookie=(event.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('rosman_session='));if(!cookie||!env('SESSION_SECRET'))return false;const token=cookie.slice(15),parts=token.split('.');if(parts.length!==2)return false;const s=crypto.createHmac('sha256',env('SESSION_SECRET')).update(parts[0]).digest('base64url');const a=Buffer.from(s),b=Buffer.from(parts[1]);if(a.length!==b.length||!crypto.timingSafeEqual(a,b))return false;try{return JSON.parse(Buffer.from(parts[0],'base64url')).exp>Date.now()}catch{return false}}
-function validatePassword(p){const v=env('ADMIN_PASSWORD_HASH');const [salt,digest]=v.split(':');if(!salt||!digest)return false;try{const found=crypto.pbkdf2Sync(p,Buffer.from(salt,'hex'),600000,32,'sha256'),expected=Buffer.from(digest,'hex');return expected.length===found.length&&crypto.timingSafeEqual(found,expected)}catch{return false}}
-function config(){return env('SESSION_SECRET').length>=32&&!!env('ADMIN_PASSWORD_HASH')&&!!env('ADMIN_USERNAME')&&!!env('GITHUB_WRITE_TOKEN')}
+function makeSession(){const payload=Buffer.from(JSON.stringify({exp:Date.now()+8*3600*1000,nonce:crypto.randomBytes(16).toString('hex')})).toString('base64url');const sig=crypto.createHmac('sha256',sessionKey()).update(payload).digest('base64url');return payload+'.'+sig}
+function authorized(event){const cookie=(event.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('rosman_session='));if(!cookie||!env('ADMIN_PASSWORD'))return false;const token=cookie.slice(15),parts=token.split('.');if(parts.length!==2)return false;const s=crypto.createHmac('sha256',sessionKey()).update(parts[0]).digest('base64url');const a=Buffer.from(s),b=Buffer.from(parts[1]);if(a.length!==b.length||!crypto.timingSafeEqual(a,b))return false;try{return JSON.parse(Buffer.from(parts[0],'base64url')).exp>Date.now()}catch{return false}}
+function validatePassword(p){const secret=env('ADMIN_PASSWORD');if(!secret)return false;const a=crypto.createHash('sha256').update(p).digest(),b=crypto.createHash('sha256').update(secret).digest();return crypto.timingSafeEqual(a,b)}
+function config(){return env('ADMIN_PASSWORD').length>=16&&!!env('GITHUB_WRITE_TOKEN')}
 async function github(path,method='GET',data){const url='https://api.github.com/repos/'+REPO+'/contents/'+path;const r=await fetch(url,{method,headers:{authorization:'Bearer '+env('GITHUB_WRITE_TOKEN'),accept:'application/vnd.github+json','x-github-api-version':'2022-11-28','content-type':'application/json','user-agent':'rosman-site-admin'},body:data?JSON.stringify(data):undefined});if(!r.ok)throw new Error('GitHub error '+r.status);return r.json()}
 exports.handler=async event=>{try{
 if(!config())return json(503,{error:'ניהול האתר עדיין לא הוגדר'});
@@ -19,7 +21,7 @@ if(action==='login'&&event.httpMethod==='POST'){
 const b=JSON.parse(event.body||'{}');
 const username=typeof b.username==='string'?b.username:'',pass=typeof b.password==='string'?b.password:'';
 if(username.length>100||pass.length>1024)return json(400,{error:'פרטי התחברות ארוכים מדי'});
-const a=Buffer.from(username),c=Buffer.from(env('ADMIN_USERNAME'));const ok=a.length===c.length&&crypto.timingSafeEqual(a,c)&&validatePassword(pass);
+const a=Buffer.from(username),c=Buffer.from(USERNAME);const ok=a.length===c.length&&crypto.timingSafeEqual(a,c)&&validatePassword(pass);
 if(!ok)return json(401,{error:'שם משתמש או סיסמה שגויים'});
 return json(200,{ok:true},{'set-cookie':'rosman_session='+makeSession()+'; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=28800'});
 }
