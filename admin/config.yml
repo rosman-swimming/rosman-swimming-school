@@ -1,0 +1,42 @@
+backend:
+  name: github
+  repo: rosman-swimming/rosman-swimming-school
+  branch: main
+
+locale: he
+media_folder: "uploads"
+public_folder: "/uploads"
+publish: true
+
+collections:
+  - name: settings
+    label: ניהול האתר
+    files:
+      - file: content/site.json
+        name: site
+        label: פרטי האתר
+        format: json
+        fields:
+          - {label: שם העסק, name: businessName, widget: string}
+          - {label: שם המדריך, name: owner, widget: string}
+          - {label: תיאור לתצוגה בוואטסאפ, name: pageDescription, widget: string}
+          - {label: מספר וואטסאפ בפורמט בינלאומי, name: whatsappPhone, widget: string}
+          - {label: הודעת וואטסאפ מוכנה, name: whatsappMessage, widget: text}
+          - {label: מייל (לא קישור לחיץ), name: contactEmail, widget: string}
+          - {label: מיקום, name: location, widget: string}
+          - {label: אזור קרוב, name: nearby, widget: string}
+          - {label: מחיר שיעור פרטי, name: privatePrice, widget: number, value_type: int, min: 0}
+          - {label: מחיר שיעור זוגי, name: pairPrice, widget: number, value_type: int, min: 0}
+          - {label: משך שיעור בדקות, name: duration, widget: number, value_type: int, min: 1}
+          - {label: שעות באמצע השבוע, name: weekdayHours, widget: string}
+          - {label: שעות יום שישי, name: fridayHours, widget: string}
+          - {label: טמפרטורת בריכה, name: poolTemperature, widget: string}
+          - {label: תיאור הבריכה, name: poolNotes, widget: text}
+          - {label: פתיח לשיעורים, name: lessonIntroduction, widget: text}
+          - {label: סוגי השיעורים, name: lessonType, widget: text}
+          - {label: הסבר על שיעור זוגי, name: pairDescription, widget: text}
+          - {label: ביטוח - פתיחה, name: insuranceIntro, widget: text}
+          - {label: ביטוח - פרטים, name: insuranceDetails, widget: text}
+          - {label: מסמכי ביטוח (אחד בכל שורה), name: insuranceDocuments, widget: text}
+          - {label: תמונת הפלייר, name: flyerImage, widget: image}
+          - {label: תמונת שיתוף, name: shareImage, widget: image}

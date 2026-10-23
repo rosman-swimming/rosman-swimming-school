@@ -1,0 +1,33 @@
+media:
+  input: uploads
+  output: /uploads
+content:
+  - name: site
+    label: ניהול אתר בית הספר לשחייה
+    type: file
+    path: content/site.json
+    format: json
+    fields:
+      - { name: businessName, label: שם העסק, type: string }
+      - { name: owner, label: שם המדריך, type: string }
+      - { name: pageDescription, label: תיאור תצוגה מקדימה, type: string }
+      - { name: whatsappPhone, label: מספר וואטסאפ, type: string }
+      - { name: whatsappMessage, label: הודעה מוכנה, type: text }
+      - { name: contactEmail, label: מייל, type: string }
+      - { name: location, label: מיקום, type: string }
+      - { name: nearby, label: נקודות ציון באזור, type: string }
+      - { name: privatePrice, label: מחיר שיעור פרטי, type: number }
+      - { name: pairPrice, label: מחיר שיעור זוגי, type: number }
+      - { name: duration, label: משך שיעור בדקות, type: number }
+      - { name: weekdayHours, label: שעות באמצע השבוע, type: string }
+      - { name: fridayHours, label: שעות שישי, type: string }
+      - { name: poolTemperature, label: טמפרטורת בריכה, type: string }
+      - { name: poolNotes, label: הבריכה, type: text }
+      - { name: lessonIntroduction, label: פתיח שיעורי שחייה, type: text }
+      - { name: lessonType, label: מתכונת שיעורים, type: text }
+      - { name: pairDescription, label: הסבר על שיעור זוגי, type: text }
+      - { name: insuranceIntro, label: ביטוח פתיח, type: text }
+      - { name: insuranceDetails, label: ביטוח פרטים, type: text }
+      - { name: insuranceDocuments, label: מסמכי ביטוח, type: text }
+      - { name: flyerImage, label: תמונת פלייר, type: image }
+      - { name: shareImage, label: תמונת שיתוף, type: image }
