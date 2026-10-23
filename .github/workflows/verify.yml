@@ -26,7 +26,8 @@ jobs:
           test -s dist/index.html
           test -s dist/flyer.jpg
           test -s dist/og.jpg
-          test -s dist/admin/config.yml
+          test -s dist/admin/index.html
+          ! test -e dist/admin/config.yml
           grep -q '170' dist/index.html
           grep -q '250' dist/index.html
           grep -q 'Rosman Swimming School' dist/index.html
