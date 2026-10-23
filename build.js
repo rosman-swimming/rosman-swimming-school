@@ -14,4 +14,5 @@ fs.mkdirSync('dist',{recursive:true});fs.writeFileSync('dist/index.html',html);f
 // Only the dedicated admin is published; legacy CMS files remain out of dist.
 fs.copyFileSync('admin/custom.html','dist/admin/index.html');
 fs.copyFileSync('admin/favicon.svg','dist/admin/favicon.svg');
-// Render the official Lucide square-pen icon as PNG for WhatsApp preview.\nfs.writeFileSync('dist/admin/lucide-square-pen.png',Buffer.from(fs.readFileSync('admin/lucide-square-pen.b64','utf8').trim(),'base64'));\n
+// Publish the official Lucide square-pen PNG for WhatsApp sharing.
+fs.writeFileSync('dist/admin/lucide-square-pen.png',Buffer.from(fs.readFileSync('admin/lucide-square-pen.b64','utf8').trim(),'base64'));
