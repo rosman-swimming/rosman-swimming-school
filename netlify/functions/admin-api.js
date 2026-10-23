@@ -1,7 +1,7 @@
 const crypto=require('node:crypto');
 const REPO='rosman-swimming/rosman-swimming-school';
 // Production edits main; the isolated test site edits its own deployed branch.
-const CONTENT_BRANCH=process.env.BRANCH==='custom-admin'?'custom-admin':'main';
+function contentBranch(event){const host=(event.headers.host||'').toLowerCase();if(host==='rosman-swim-test.netlify.app')return 'custom-admin';if(host==='rosman-swim.netlify.app')return 'main';return null}
 const USERNAME='gilrosman';
 function sessionKey(){return crypto.createHash('sha256').update('rosman-session-v1:').update(env('ADMIN_PASSWORD')).digest()}
 // Netlify-managed edge throttling: applies across function instances, unlike an in-memory counter.
@@ -18,6 +18,7 @@ exports.handler=async event=>{try{
 if(!config())return json(503,{error:'ניהול האתר עדיין לא הוגדר'});
 if((event.body||'').length>25000)return json(413,{error:'הבקשה ארוכה מדי'});
 if(event.httpMethod==='POST'&&!sameOrigin(event))return json(403,{error:'בקשה לא מורשית'});
+const CONTENT_BRANCH=contentBranch(event);if(!CONTENT_BRANCH)return json(403,{error:'כתובת אתר לא מאושרת לניהול'});
 const action=(event.queryStringParameters||{}).action;
 if(action==='login'&&event.httpMethod==='POST'){
 const b=JSON.parse(event.body||'{}');
