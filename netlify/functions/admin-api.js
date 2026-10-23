@@ -31,6 +31,7 @@ return json(200,{ok:true},{'set-cookie':'rosman_session='+makeSession()+'; Path=
 if(action==='logout'&&event.httpMethod==='POST')return json(200,{ok:true},{'set-cookie':'rosman_session=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0'});
 if(action==='session'&&event.httpMethod==='GET')return json(200,{authenticated:authorized(event)});
 if(!authorized(event))return json(401,{error:'יש להתחבר'});
+if(action==='refresh'&&event.httpMethod==='POST')return json(200,{ok:true},{'set-cookie':'rosman_session='+makeSession()+'; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=1800'});
 if(action==='read'&&event.httpMethod==='GET'){
 const f=await github('content/site.json?ref='+CONTENT_BRANCH);return json(200,{data:JSON.parse(Buffer.from(f.content,'base64').toString('utf8')),sha:f.sha});
 }
