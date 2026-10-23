@@ -15,7 +15,7 @@ function validatePassword(p){const secret=env('ADMIN_PASSWORD');if(!secret)retur
 function config(){return env('ADMIN_PASSWORD').length>=16&&!!env('GITHUB_WRITE_TOKEN')}
 async function github(path,method='GET',data){const url='https://api.github.com/repos/'+REPO+'/contents/'+path;const r=await fetch(url,{method,headers:{authorization:'Bearer '+env('GITHUB_WRITE_TOKEN'),accept:'application/vnd.github+json','x-github-api-version':'2022-11-28','content-type':'application/json','user-agent':'rosman-site-admin'},body:data?JSON.stringify(data):undefined});if(!r.ok)throw new Error('GitHub error '+r.status);return r.json()}
 exports.handler=async event=>{try{
-if(!config())return json(503,{error:'ניהול האתר עדיין לא הוגדר'});
+if(!config()){const missing=[];if(!env('ADMIN_PASSWORD'))missing.push('ADMIN_PASSWORD חסר');else if(env('ADMIN_PASSWORD').length<16)missing.push('ADMIN_PASSWORD קצר מ־16 תווים');if(!env('GITHUB_WRITE_TOKEN'))missing.push('GITHUB_WRITE_TOKEN חסר');return json(503,{error:'הגדרת הניהול אינה מלאה',details:missing.join('; ')}); }
 if((event.body||'').length>25000)return json(413,{error:'הבקשה ארוכה מדי'});
 if(event.httpMethod==='POST'&&!sameOrigin(event))return json(403,{error:'בקשה לא מורשית'});
 const CONTENT_BRANCH=contentBranch(event);if(!CONTENT_BRANCH)return json(403,{error:'כתובת אתר לא מאושרת לניהול'});
